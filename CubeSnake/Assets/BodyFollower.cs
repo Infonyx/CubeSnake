@@ -13,8 +13,8 @@ public class BodyFollower : MonoBehaviour {
         positions = GameObject.FindGameObjectWithTag("Head").GetComponent<PositionSaver>();
     }
 
-    void Update () {
+   /* void FixedUpdate () {
         transform.position = positions.positionList[Mathf.Clamp((1 + bodyId) * idDelay, 0, positions.positionList.Count - 1)];
         transform.rotation = positions.rotationList[Mathf.Clamp((1 + bodyId) * idDelay, 0, positions.rotationList.Count - 1)];
-	}
+	}*/
 }

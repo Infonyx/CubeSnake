@@ -11,16 +11,22 @@ public class SpawningBodies : MonoBehaviour {
     private float time = 0;
 
     private float score = 0;
+    private float scoreChange = 1;
     private Text scoreText;
 
     private float onSpawnScore = 19;
     public bool isDead = false;
 
+    float maxCollisionDistance = 0.5f;
+
+    FoodController foodController;
+    public List<GameObject> ObjectList = new List<GameObject>();
+
     private void Start()
     {
+        foodController = GameObject.FindGameObjectWithTag("FoodController").GetComponent<FoodController>();
         lastSpawned = gameObject;
-        Spawn();
-        Spawn();
+        Spawn(2);
         score = 0;
         scoreText = GameObject.Find("Text").GetComponent<Text>();
     }
@@ -33,37 +39,77 @@ public class SpawningBodies : MonoBehaviour {
 
 		if (Input.GetKeyDown(KeyCode.E))
         {
-            Spawn();
+            Spawn(1);
         }
 
-        time += Time.deltaTime;
-        if (time>3)
-        {
-            time -= 3;
-            Spawn();
-        }
-
-        score += Time.deltaTime * 5;
+        scoreChange -= Time.deltaTime;
+        score += scoreChange * Time.deltaTime;
         scoreText.text = (int) score + "";
+
+        CheckCollision();
 	}
 
-    void Spawn()
+    void Spawn(int count)
     {
-        lastSpawned = Instantiate(body, lastSpawned.transform.position, lastSpawned.transform.rotation);
-        lastSpawned.GetComponent<BodyFollower>().bodyId = lastId;
-        lastId++;
-        score += onSpawnScore; 
-    }
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        Debug.Log("Colliding with " + collision.gameObject.name);
-        if (collision.gameObject.GetComponent<BodyFollower>() != null)
+        for (int i = 0; i < count; i++)
         {
-            if (collision.gameObject.GetComponent<BodyFollower>().bodyId > 2)
+            lastSpawned = Instantiate(body, lastSpawned.transform.position, lastSpawned.transform.rotation);
+            lastSpawned.GetComponent<PositionSaver>().bodyId = lastId;
+            PositionSaver.bodyCount = lastId;
+            if (lastId > 4)
             {
-                isDead = true;
+                ObjectList.Add(lastSpawned);
+            }
+            lastId++;
+
+            if (scoreChange <= 0)
+            {
+                scoreChange = 3;
+            } else
+            {
+                scoreChange += 2;
             }
         }
     }
+
+    private void CheckCollision()
+    {
+        foreach (GameObject obj in ObjectList)
+        {
+            if (Vector3.Distance(transform.position, obj.transform.position) < maxCollisionDistance)
+            {
+                if (obj.GetComponent<BodyFollower>() != null)
+                {
+                    
+                    isDead = true;
+                    
+                }
+                else
+                {
+                    ObjectList.Remove(obj);
+                    Destroy(obj);
+                    Spawn(Random.Range(1, 4));
+                    foodController.SpawnFood();
+                }
+
+                break;
+            }
+        }
+    }
+
+    /*private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.GetComponent<BodyFollower>() != null)
+        {
+            if (collision.gameObject.GetComponent<BodyFollower>().bodyId > 4)
+            {
+                isDead = true;
+            }
+        } else if (collision.gameObject.tag == "Food")
+        {
+            Destroy(collision.gameObject);
+            Spawn(Random.Range(1, 4));
+            foodController.SpawnFood();
+        }
+    }*/
 }

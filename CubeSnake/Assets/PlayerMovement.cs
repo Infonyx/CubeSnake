@@ -5,16 +5,13 @@ using UnityEngine.SceneManagement;
 
 public class PlayerMovement : MonoBehaviour {
 
-    public float movementSpeed = 3f;
+    private float movementSpeed = 0;
     public float turnSpeed = 250f;
-    public float sideTurnSpeed = 70f;
+    public float sideTurnSpeed = 200f;
     public float onGroundDistance = 1f;
 
     private float turningSafety = 0.1f;
     private float size;
-
-
-    public float CubeSize = 5;
 
     private bool startedTurning = false;
     RaycastHit hit;
@@ -25,12 +22,27 @@ public class PlayerMovement : MonoBehaviour {
     private float rotationLerp = 0.1f;
 
     private Touch newestTouch;
+
+    private Vector3 realPosition;
 	
 	void Start () {
         size = transform.lossyScale.x;
+        realPosition = transform.position;
+        StartCoroutine(Accelerate());
 	}
-	
-	void Update () {
+
+    private IEnumerator Accelerate()
+    {
+        while (movementSpeed < 3)
+        {
+            movementSpeed += Time.deltaTime;
+            yield return null;
+        }
+        movementSpeed = 3;
+    }
+
+
+	void FixedUpdate () {
 
         if (gameObject.GetComponent<SpawningBodies>().isDead)
         {
@@ -48,26 +60,26 @@ public class PlayerMovement : MonoBehaviour {
         {
             if (Screen.width/2 - GetLatestTouch().position.x > 0)
             {
-                transform.Rotate(0, -sideTurnSpeed * Time.deltaTime, 0);
+                transform.Rotate(0, -sideTurnSpeed * Time.fixedDeltaTime, 0);
             } else
             {
-                transform.Rotate(0, sideTurnSpeed * Time.deltaTime, 0);
+                transform.Rotate(0, sideTurnSpeed * Time.fixedDeltaTime, 0);
             }
         }
 
-
+        
         if (Input.GetKey(KeyCode.A))
         {
-            transform.Rotate(0,-sideTurnSpeed * Time.deltaTime,0);
+            transform.Rotate(0,-sideTurnSpeed * Time.fixedDeltaTime,0);
         }
         if (Input.GetKey(KeyCode.D))
         {
-            transform.Rotate(0, sideTurnSpeed * Time.deltaTime, 0);
+            transform.Rotate(0, sideTurnSpeed * Time.fixedDeltaTime, 0);
         }
-
+        
         if (RotateParallelToGround())
         {
-            transform.Translate(transform.forward * movementSpeed * Time.deltaTime, Space.World);
+            transform.Translate(transform.forward * movementSpeed * Time.fixedDeltaTime, Space.World);
         }
 	}
 
@@ -84,8 +96,9 @@ public class PlayerMovement : MonoBehaviour {
             edgeVector = FindEdgeVector(transform.forward, transform.up, transform.right);
             transform.RotateAround(transform.position - transform.up * (size/2 + turningSafety), edgeVector, turnSpeed * Time.deltaTime);
             startedTurning = true;
+            return false;
         }
-        return false;
+        
     }
 
     private Vector3 FindEdgeVector(Vector3 forward, Vector3 up, Vector3 right)
